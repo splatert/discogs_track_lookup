@@ -22,8 +22,8 @@ function removeANVMark(artist) {
 
 (function() {
 
-    var get_artists = document.getElementsByClassName('artist_3zAQD');
-    var get_titles = document.getElementsByClassName('trackTitle_CTKp4');
+    var get_artists = document.getElementsByClassName('artist_VsG56');
+    var get_titles = document.getElementsByClassName('trackTitle_loyWF');
 
     var artists = [];
     var titles = [];
