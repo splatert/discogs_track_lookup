@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Discogs_track_lookup
 // @namespace    http://tampermonkey.net/
-// @version      2024-08-27
+// @version      2026-10-31
 // @description  Look up individual tracks on Discogs
 // @author       splatert
 // @match        https://www.discogs.com/release/*
@@ -11,61 +11,66 @@
 
 
 
-function removeANVMark(artist) {
-    if (artist.endsWith('*')) {
-        artist = artist.slice(0, -1);
-    }
-    return artist;
+function cleanUp(text) {
+    return text.replaceAll(/([*])/gm, '');
 }
 
 
 
 (function() {
 
-    var get_artists = document.getElementsByClassName('artist_VsG56');
-    var get_titles = document.getElementsByClassName('trackTitle_loyWF');
-
+    var artists
     var artists = [];
     var titles = [];
 
-    for (let i=0; i<get_artists.length; i++) {
-        var artist = get_artists[i].firstChild.firstChild.innerText;
+    var tracklist = document.getElementsByClassName('tracklist_ZdQ0I')[0];
+    if (tracklist) {
+        var items = tracklist.getElementsByTagName('tr');
 
-        artist = removeANVMark(artist);
-        artists.push(artist);
+
+        for (let i = 0; i < items.length; i++) {
+            if (!items[i].classList.contains('heading_mkZNt')) {
+
+                var artist = '';
+                var title = '';
+
+                var get_artists = items[i].getElementsByClassName('artist_VsG56');
+                if (get_artists[0]) {
+                    artist = get_artists[0].textContent;
+                    artist = cleanUp(artist);
+                }
+
+                var get_titles = items[i].querySelectorAll('span.trackTitle_loyWF');
+                if (get_titles[0]) {
+                    title = get_titles[0].innerText;
+                }
+
+                if (artist && title) {
+                    createLinkButton(get_titles[0].parentElement, artist, title);
+                    artists.push(artist);
+                    titles.push(title);
+                }
+                
+            }
+        }
+
     }
 
 
 
-
-    var skip = false;
-
-    for (let i=0; i<get_titles.length; i++) {
-        if (!skip) {
-            skip = true;
-            titles.push(get_titles[i].firstChild.textContent);
-        }
-        else {
-            skip = false;
-        }
-    }
-
-
-
-    for (let i=0; i<artists.length; i++) {
-
+    function createLinkButton(location, artist, title) {
         var searchBtn = document.createElement('a');
         searchBtn.style.userSelect = 'none';
         searchBtn.text = ""
         searchBtn.target = '_blank';
         searchBtn.style.marginLeft = '15px';
 
-        searchBtn.href = "https://www.discogs.com/search?q=" + artists[i] + ' - ' + titles[i];
+        searchBtn.href = "https://www.discogs.com/search?q=" + artist + ' ' + title;
         searchBtn.href = searchBtn.href.replaceAll('&','%26');
 
 
         searchBtn.innerHTML = '<img src=" data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAMAAAAoLQ9TAAAAYFBMVEVHcEzV6Pjr8fiLd2j1+fx2l7Tl7fXF4v283fz///9bOyLx9fpNW3NWbY3t9f1nSzNDTF2awNaIr8jm8v2fj4Oxd0ax2Pz7/f6Ju+yBa1uu0+Ww0eOoy954X0u4glbV2+TCBBszAAAAAXRSTlMAQObYZgAAABt0RVh0U29mdHdhcmUAZ2lmMnBuZyAwLjYgKGJldGEpqt1pkgAAAI9JREFUGNNdz1kOgzAMRVESh4AJGRjKTNn/LvsMqEW9fz6y5CTjZxlitaxb07RtjkaBRVlttbZo8tjh1RZSWZZhEuHNFLeE4ASaGyCDq7/QE810Qetk7nkMM/2AzGg6FVkgDzhAxpyQBDRg16FTT6Ad87u6wODeMMcYq1eF77A/HN59/k0EG977GqWUIIC/Pl2MClkXvqPNAAAAAElFTkSuQmCC">';
-        get_artists[i].appendChild(searchBtn);
+        location.appendChild(searchBtn);
     }
 
 
